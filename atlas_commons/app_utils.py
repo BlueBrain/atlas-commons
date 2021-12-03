@@ -20,11 +20,6 @@ DATA_PATH = Path(__file__).parent / "data"
 ABT_PATH = Path(__file__).parent.parent.parent
 
 
-def set_verbose(logger, verbose):
-    """Set the verbose level for the cli"""
-    logger.setLevel((logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)])
-
-
 class ParameterContainer(OrderedDict):
     """A dict class used to contain and display the parameters"""
 
@@ -38,22 +33,22 @@ class ParameterContainer(OrderedDict):
 def log_args(logger, handler_path=None):
     """A decorator used to redirect logger and log arguments"""
 
-    def set_logger(file_, logger_path=handler_path):
+    def set_logger(function, logger_path=handler_path):
 
         if handler_path is None:
-            logger_path = os.path.join(LOG_DIRECTORY, file_.__name__ + ".log")
+            logger_path = os.path.join(LOG_DIRECTORY, function.__name__ + ".log")
 
-        @wraps(file_)
+        @wraps(function)
         def wrapper(*args, **kw):
             logger.addHandler(logging.FileHandler(logger_path))
-            param = ParameterContainer(inspect.signature(file_).parameters)
-            for name, arg in zip(inspect.signature(file_).parameters, args):
+            param = ParameterContainer(inspect.signature(function).parameters)
+            for name, arg in zip(inspect.signature(function).parameters, args):
                 param[name] = arg
             for key, value in kw.items():
                 param[key] = value
             date_str = datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-            logger.info(f"{date_str}:{file_.__name__} args:[{param}]")
-            file_(*args, **kw)
+            logger.info(f"{date_str}:{function.__name__} args:[{param}]")
+            function(*args, **kw)
 
         return wrapper
 
@@ -107,9 +102,9 @@ def assert_meta_properties(atlases):
     """Assert that all VoxelData metadata match
 
     Check that
-        * VoxelData.shape
-        * VoxelData.voxel_dimensions
-        * VoxelData.offset
+        - VoxelData.shape
+        - VoxelData.voxel_dimensions
+        - VoxelData.offset
 
     is consistent accross the input VoxelData objects.
 
@@ -145,7 +140,7 @@ def common_atlas_options(function):
             @common_atlas_options
             @click.option(...)
             ...
-            def combine_annotations(...):
+            def combine_annotations(annotation_path, hierarchy_path, ...):
     """
     function = click.option(
         "--annotation-path",
@@ -161,6 +156,40 @@ def common_atlas_options(function):
         type=EXISTING_FILE_PATH,
         required=True,
         help="The path to the hierarchy file, i.e., AIBS 1.json or BBP hierarchy.json.",
+    )(function)
+
+    return function
+
+
+def set_verbose(logger, verbose):
+    """Set the verbose level for the cli"""
+    logger.setLevel((logging.WARNING, logging.INFO, logging.DEBUG)[min(verbose, 2)])
+
+
+def verbose_option(function):
+    """
+    Common verbose option for atlas related CLIs.
+
+    Args:
+        function: the command function to be wrapped with the verbose option.
+
+    Returns:
+        the `function` decorated with the common options.
+        Example usage in app:
+            L = logging.getLogger(__name__)
+            ...
+            @app.command()
+            @verbose_option
+            @click.option(...)
+            ...
+            def combine_annotations(verbose, ...):
+                set_verbose(L, verbose)
+    """
+    function = click.option(
+        "-v",
+        "--verbose",
+        count=True,
+        help="Use -v for info and -vv for debug. Defaults to warning level.",
     )(function)
 
     return function
