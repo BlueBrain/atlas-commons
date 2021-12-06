@@ -1,15 +1,12 @@
 """Generic atlas tools"""
 
-from typing import TYPE_CHECKING, Dict, Tuple, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np  # type: ignore
+import voxcell
 from nptyping import NDArray  # type: ignore
 
 from atlas_commons.exceptions import AtlasCommonsError
-
-if TYPE_CHECKING:  # pragma: no cover
-    from voxcell import RegionMap  # type: ignore
-
 
 # pylint: disable=invalid-name
 FloatArray = Union[NDArray[float], NDArray[np.float16], NDArray[np.float32], NDArray[np.float64]]
@@ -17,7 +14,7 @@ NumericArray = Union[NDArray[bool], NDArray[int], NDArray[float]]
 
 
 def query_region_mask(
-    region: dict, annotation: NDArray[int], region_map: "RegionMap"
+    region: dict, annotation: NDArray[int], region_map: "voxcell.RegionMap"
 ) -> NDArray[bool]:
     """
     Create a mask for the region defined by `query`.
@@ -45,7 +42,7 @@ def query_region_mask(
 
 
 def get_region_mask(
-    acronym: str, annotation: NDArray[int], region_map: "RegionMap"
+    acronym: str, annotation: NDArray[int], region_map: "voxcell.RegionMap"
 ) -> NDArray[bool]:
     """
     Create a mask for the region defined by `acronym`.
@@ -170,7 +167,7 @@ def assert_metadata_content(metadata: dict) -> None:
 
 def create_layered_volume(
     annotated_volume: NDArray[int],
-    region_map: "RegionMap",
+    region_map: "voxcell.RegionMap",
     metadata: dict,
 ):
     """
@@ -214,7 +211,7 @@ def create_layered_volume(
 
 def get_layer_masks(
     annotated_volume: NDArray[int],
-    region_map: "RegionMap",
+    region_map: "voxcell.RegionMap",
     metadata: dict,
 ) -> Dict[str, NDArray[bool]]:
     """
@@ -233,3 +230,65 @@ def get_layer_masks(
     layers = create_layered_volume(annotated_volume, region_map, metadata)
 
     return {name: layers == i for (i, name) in enumerate(metadata["layers"]["names"], 1)}
+
+
+def zero_to_nan(field: FloatArray) -> None:
+    """
+    Turns, in place, the zero vectors of a vector field into NaN vectors.
+
+    Zero vectors are replaced, in place, by vectors with np.nan coordinates.
+
+    Note: This function is used to invalidate zero vectors or zero quaternions as a zero vector
+    cannot be used to define a direction or an orientation.
+    In addition, it allows the multiplication of an invalid quaternion, i.e., a quaternion with
+     NaN coorinates with a vector (the output is a NaN vector) without raising exception.
+
+    Args:
+        field: N-dimensional vector field, i.e., numerical array of shape (..., N).
+    Raises:
+        ValueError if the input field is not of floating point type.
+    """
+    if not np.issubdtype(field.dtype, np.floating):
+        raise ValueError(f"The input field must be of floating point type. Got {field.dtype}.")
+    norms = np.linalg.norm(field, axis=-1)
+    # pylint: disable=unsupported-assignment-operation
+    field[norms == 0] = np.nan
+
+
+def normalize(vector_field: NumericArray):
+    """
+    Normalize in place a vector field wrt to the Euclidean norm.
+
+    Zero vectors are turned into vectors with np.nan coordinates
+    silently.
+    NaN vectors are unchanged and warnings are kept silent.
+
+    Args:
+        vector_field: vector field of floating point type and of shape (..., N)
+         where N is the number of vector components.
+    """
+    norm = np.linalg.norm(vector_field, axis=-1)
+    with np.errstate(invalid="ignore"):  # NaNs are expected
+        norm = np.where(norm > 0, norm, 1.0)
+    vector_field /= norm[..., np.newaxis]
+    zero_to_nan(vector_field)
+
+
+def normalized(vector_field: NumericArray):
+    """
+    Normalize a vector field wrt to the Euclidean norm.
+
+    Zero vectors are turned into vectors with np.nan coordinates
+    silently.
+
+    Args:
+        vector_field: vector field of floating point type and of shape (..., N)
+         where N is the number of vector components.
+    Return:
+        normalized_:
+            vector field of unit vectors of the same shape and the same type as `vector_field`.
+    """
+    with np.errstate(invalid="ignore"):
+        normalized_ = voxcell.math_utils.normalize(vector_field)
+        zero_to_nan(normalized_)
+        return normalized_

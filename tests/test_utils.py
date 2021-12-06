@@ -211,3 +211,46 @@ def test_assert_metadata_content(region_map, annotated_volume):
         metadata = get_metadata("Isocortex")
         del metadata["layers"]["queries"]
         tested.assert_metadata_content(metadata)
+
+
+def test_zero_to_nan():
+    # 3D unit vectors
+    field = np.ones((2, 2, 2, 3), dtype=np.float32)
+    field[0, 0, 0] = 0
+    field[1, 1, 1] = 0
+    expected = np.ones((2, 2, 2, 3), dtype=float)
+    expected[0, 0, 0] = np.nan
+    expected[1, 1, 1] = np.nan
+    tested.zero_to_nan(field)
+    npt.assert_array_equal(field, expected)
+
+    # Quaternions
+    field = np.ones((2, 2, 2, 4), dtype=np.float64)
+    field[0, 1, 0] = 0
+    field[1, 0, 1] = 0
+    expected = np.ones((2, 2, 2, 4), dtype=float)
+    expected[0, 1, 0] = np.nan
+    expected[1, 0, 1] = np.nan
+    tested.zero_to_nan(field)
+    npt.assert_array_equal(field, expected)
+
+    # Wrong input type
+    field = np.ones((2, 2, 2, 4), dtype=int)
+    with pytest.raises(ValueError):
+        tested.zero_to_nan(field)
+
+
+def test_normalized():
+    # A 3D vector field of integer type
+    vector_field = np.ones((2, 2, 2, 3), dtype=np.int32)
+    normalized = tested.normalized(vector_field)
+    npt.assert_array_almost_equal(normalized, np.full((2, 2, 2, 3), 1.0 / np.sqrt(3.0)))
+    # A 4D vector field with some zero vectors
+    vector_field = np.zeros((2, 2, 2, 4), dtype=np.float32)
+    vector_field[0, 0, 0] = np.array([1, 1.0, 0.0, 0.0])
+    vector_field[1, 1, 1] = np.array([0, 1, 1, 1])
+    normalized = tested.normalized(vector_field)
+    expected = np.full(normalized.shape, np.nan)
+    expected[0, 0, 0] = np.array([1.0, 1.0, 0.0, 0.0]) / np.sqrt(2.0)
+    expected[1, 1, 1] = np.array([0.0, 1.0, 1.0, 1.0]) / np.sqrt(3.0)
+    npt.assert_array_almost_equal(normalized, expected)

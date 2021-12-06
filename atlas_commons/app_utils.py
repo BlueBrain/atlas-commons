@@ -189,6 +189,7 @@ def verbose_option(function):
         "-v",
         "--verbose",
         count=True,
+        required=False,
         help="Use -v for info and -vv for debug. Defaults to warning level.",
     )(function)
 
