@@ -1,3 +1,3 @@
 """atlas-commons version"""
-VERSION = "0.1.2.dev0"
+VERSION = "0.1.2"
 __version__ = VERSION
