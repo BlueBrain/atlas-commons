@@ -1,21 +1,17 @@
 """Generic atlas tools"""
 
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
-import numpy as np  # type: ignore
+import numpy as np
 import voxcell
-from nptyping import NDArray  # type: ignore
 
 from atlas_commons.exceptions import AtlasCommonsError
-
-# pylint: disable=invalid-name
-FloatArray = Union[NDArray[float], NDArray[np.float16], NDArray[np.float32], NDArray[np.float64]]
-NumericArray = Union[NDArray[bool], NDArray[int], NDArray[float]]
+from atlas_commons.typing import AnnotationT, BoolArray, FloatArray, NumericArray
 
 
 def query_region_mask(
-    region: dict, annotation: NDArray[int], region_map: "voxcell.RegionMap"
-) -> NDArray[bool]:
+    region: dict, annotation: AnnotationT, region_map: voxcell.RegionMap
+) -> BoolArray:
     """
     Create a mask for the region defined by `query`.
 
@@ -42,8 +38,8 @@ def query_region_mask(
 
 
 def get_region_mask(
-    acronym: str, annotation: NDArray[int], region_map: "voxcell.RegionMap"
-) -> NDArray[bool]:
+    acronym: str, annotation: AnnotationT, region_map: voxcell.RegionMap
+) -> BoolArray:
     """
     Create a mask for the region defined by `acronym`.
 
@@ -84,21 +80,6 @@ def split_into_halves(
     right_volume[..., :z_halfway] = 0
 
     return left_volume, right_volume
-
-
-def copy_array(array: NDArray, copy=True) -> NDArray:
-    """
-    Returns either `array` or a deep copy of `array` depending on `copy`.
-
-    Args:
-        array: a numpy ndarray
-        copy: (Optional) If True, returns a hard copy of `array`, otherwise
-            returns `array` itself.
-    Returns:
-        a copy of `array` or `array` itself if `copy` is False.
-    """
-
-    return array.copy() if copy else array
 
 
 def assert_metadata_content(metadata: dict) -> None:
@@ -166,8 +147,8 @@ def assert_metadata_content(metadata: dict) -> None:
 
 
 def create_layered_volume(
-    annotated_volume: NDArray[int],
-    region_map: "voxcell.RegionMap",
+    annotated_volume: AnnotationT,
+    region_map: voxcell.RegionMap,
     metadata: dict,
 ):
     """
@@ -210,10 +191,10 @@ def create_layered_volume(
 
 
 def get_layer_masks(
-    annotated_volume: NDArray[int],
-    region_map: "voxcell.RegionMap",
+    annotated_volume: AnnotationT,
+    region_map: voxcell.RegionMap,
     metadata: dict,
-) -> Dict[str, NDArray[bool]]:
+) -> Dict[str, BoolArray]:
     """
     Create a 3D boolean mask of each layer in `metadata`.
 
@@ -255,7 +236,7 @@ def zero_to_nan(field: FloatArray) -> None:
     field[norms == 0] = np.nan
 
 
-def normalize(vector_field: NumericArray):
+def normalize(vector_field: FloatArray):
     """
     Normalize in place a vector field wrt to the Euclidean norm.
 

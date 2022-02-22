@@ -18,12 +18,13 @@ setup(
     python_requires=">=3.6.0",
     install_requires=[
         "click>=7.0",
-        "nptyping>=1.0.1",
         "numpy>=1.15.0",
         "voxcell>=3.0.0",
     ],
     extras_require={
-        "tests": ["pytest>=4.4.0", "mock>=2.0.0"],
+        "tests": [
+            "pytest>=4.4.0",
+        ],
     },
     packages=find_packages(),
     include_package_data=True,
