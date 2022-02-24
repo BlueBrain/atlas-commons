@@ -12,13 +12,20 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
     FloatArray = NDArray[np.floating]
+
     BoolArray = NDArray[np.bool_]
+    SignedIntArray = NDArray[np.signedinteger]
+    UnsignedIntArray = NDArray[np.unsignedinteger]
     NumericArray = Union[BoolArray, NDArray[np.number]]
+
     AnnotationT = NDArray[np.integer]
 else:
-    NDArray = None
     FloatArray = None
+
     BoolArray = None
+    SignedIntArray = None
+    UnsignedIntArray = None
     NumericArray = None
+
     AnnotationT = None
 # pylint: enable=invalid-name

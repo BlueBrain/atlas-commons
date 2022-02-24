@@ -1,5 +1,0 @@
-include:
-  - project: nse/ci
-    file: /ci/pipelines/nse.atlas-commons.yml
-
-
