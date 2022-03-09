@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
     AnnotationT = NDArray[np.integer]
 else:
+    NDArray = None
+
     FloatArray = None
 
     BoolArray = None
