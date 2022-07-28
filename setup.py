@@ -8,7 +8,7 @@ setup(
     description="Library containing common functions to build atlases",
     url="https://github.com/BlueBrain/atlas-commons",
     download_url="https://github.com/BlueBrain/atlas-commons",
-    license='Apache-2',
+    license="Apache-2",
     python_requires=">=3.7.0",
     install_requires=[
         "click>=7.0",
@@ -22,14 +22,12 @@ setup(
     },
     packages=find_packages(),
     include_package_data=True,
-
     use_scm_version={
         "local_scheme": "no-local-version",
-        },
+    },
     setup_requires=[
-        'setuptools_scm',
+        "setuptools_scm",
     ],
-
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "Programming Language :: Python",
