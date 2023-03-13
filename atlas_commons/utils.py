@@ -83,6 +83,27 @@ def split_into_halves(
     return left_volume, right_volume
 
 
+def assign_hemispheres(annotation_path, halfway_offset: int = 0, hemispheres_path = None):
+    annotation = voxcell.VoxelData.load_nrrd(annotation_path)
+
+    hemispheres_volume = np.zeros_like(annotation.raw, dtype=np.dtype('u1'))
+    z_halfway = hemispheres_volume.shape[2] // 2 + halfway_offset
+    hemispheres_volume[..., :z_halfway] = 1 # right hemisphere
+    hemispheres_volume[..., z_halfway:] = 2 # left hemisphere
+    hemispheres_volume[annotation.raw == 0] = 0 # outside the brain
+
+    hemispheres = annotation
+    hemispheres.raw = hemispheres_volume
+
+    if not hemispheres_path:
+        nrrd_ext = ".nrrd"
+        if annotation_path.endswith(nrrd_ext):
+            hemispheres_path = annotation_path.replace(nrrd_ext, "_hemispheres"+nrrd_ext)
+        else:
+            hemispheres_path = annotation_path+"_hemispheres"
+    hemispheres.save_nrrd(hemispheres_path)
+
+
 def assert_metadata_content(metadata: dict) -> None:
     """
     Raise an error if some mandatory key is missing in `metadata`.
