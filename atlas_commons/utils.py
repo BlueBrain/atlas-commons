@@ -59,6 +59,10 @@ def get_region_mask(
     return query_region_mask(region, annotation, region_map)
 
 
+def compute_halfway(size, halfway_offset: int = 0):
+    return size // 2 + halfway_offset
+
+
 def split_into_halves(
     volume: NumericArray,
     halfway_offset: int = 0,
@@ -74,7 +78,7 @@ def split_into_halves(
         shape as `volume`. Voxels are zeroed for the z-values above, respectively below, the half
         of the z-dimension.
     """
-    z_halfway = volume.shape[2] // 2 + halfway_offset
+    z_halfway = compute_halfway(volume.shape[2], halfway_offset)
     left_volume = volume.copy()
     left_volume[..., z_halfway:] = 0
     right_volume = volume.copy()
@@ -83,25 +87,26 @@ def split_into_halves(
     return left_volume, right_volume
 
 
-def assign_hemispheres(annotation_path, halfway_offset: int = 0, hemispheres_path = None):
-    annotation = voxcell.VoxelData.load_nrrd(annotation_path)
+def assign_hemispheres(annotation, z_halfway: int = 0):
+    """
+    Create a hemispheres map of the input 3D volume.
 
+    Args:
+        annotation: VoxelData of the brain parcellation.
+            z_halfway: Optional splitting point of the z-axis.
+    Returns:
+        VoxelData of the same shape of the input annotation, with the following voxels values: 1 for right hemisphere, 2 for left hemisphere, 0 if outside the brain.
+    """
     hemispheres_volume = np.zeros_like(annotation.raw, dtype=np.dtype('u1'))
-    z_halfway = hemispheres_volume.shape[2] // 2 + halfway_offset
+
+    if z_halfway == 0:
+        z_halfway = compute_halfway(hemispheres_volume.shape[2])
     hemispheres_volume[..., :z_halfway] = 1 # right hemisphere
     hemispheres_volume[..., z_halfway:] = 2 # left hemisphere
     hemispheres_volume[annotation.raw == 0] = 0 # outside the brain
 
-    hemispheres = annotation
-    hemispheres.raw = hemispheres_volume
-
-    if not hemispheres_path:
-        nrrd_ext = ".nrrd"
-        if annotation_path.endswith(nrrd_ext):
-            hemispheres_path = annotation_path.replace(nrrd_ext, "_hemispheres"+nrrd_ext)
-        else:
-            hemispheres_path = annotation_path+"_hemispheres"
-    hemispheres.save_nrrd(hemispheres_path)
+    hemispheres = annotation.with_data(hemispheres_volume)
+    return hemispheres
 
 
 def assert_metadata_content(metadata: dict) -> None:
