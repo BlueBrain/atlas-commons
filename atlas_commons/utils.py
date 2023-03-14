@@ -60,6 +60,9 @@ def get_region_mask(
 
 
 def compute_halfway(size, halfway_offset: int = 0):
+    """
+    Compute halfway point of the input size
+    """
     halfway = size // 2 + halfway_offset
 
     return halfway
