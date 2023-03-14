@@ -98,7 +98,8 @@ def assign_hemispheres(annotation, z_halfway: int = 0):
         annotation: VoxelData of the brain parcellation.
         z_halfway: Optional splitting point of the z-axis.
     Returns:
-        VoxelData of the same shape of the input annotation, with the following voxels values: 1 for left hemisphere, 2 for right hemisphere, 0 if outside the brain.
+        VoxelData of the same shape of the input annotation, with the following voxels values:
+        1 for left hemisphere, 2 for right hemisphere, 0 if outside the brain.
     """
     hemispheres_volume = np.zeros_like(annotation.raw, dtype=np.dtype("u1"))
 
