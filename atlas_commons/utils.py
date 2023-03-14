@@ -60,25 +60,28 @@ def get_region_mask(
 
 
 def compute_halfway(size, halfway_offset: int = 0):
-    return size // 2 + halfway_offset
+    halfway = size // 2 + halfway_offset
+
+    return halfway
 
 
 def split_into_halves(
     volume: NumericArray,
-    halfway_offset: int = 0,
+    z_halfway: int = 0,
 ) -> Tuple[NumericArray, NumericArray]:
     """
     Split input 3D volume into two halves using the middle plane orthogonal to the z-axis.
 
     Args:
         volume: 3D numeric array.
-            halfway_offset: Optional offset used for the splitting along the z-axis.
+        z_halfway: Optional splitting point of the z-axis.
     Returns:
         tuple(left_volume, right_volume), the two halves of the input volume. Each has the same
         shape as `volume`. Voxels are zeroed for the z-values above, respectively below, the half
         of the z-dimension.
     """
-    z_halfway = compute_halfway(volume.shape[2], halfway_offset)
+    if z_halfway == 0:
+        z_halfway = compute_halfway(volume.shape[2])
     left_volume = volume.copy()
     left_volume[..., z_halfway:] = 0
     right_volume = volume.copy()
@@ -93,16 +96,16 @@ def assign_hemispheres(annotation, z_halfway: int = 0):
 
     Args:
         annotation: VoxelData of the brain parcellation.
-            z_halfway: Optional splitting point of the z-axis.
+        z_halfway: Optional splitting point of the z-axis.
     Returns:
-        VoxelData of the same shape of the input annotation, with the following voxels values: 1 for right hemisphere, 2 for left hemisphere, 0 if outside the brain.
+        VoxelData of the same shape of the input annotation, with the following voxels values: 1 for left hemisphere, 2 for right hemisphere, 0 if outside the brain.
     """
     hemispheres_volume = np.zeros_like(annotation.raw, dtype=np.dtype('u1'))
 
     if z_halfway == 0:
         z_halfway = compute_halfway(hemispheres_volume.shape[2])
-    hemispheres_volume[..., :z_halfway] = 1 # right hemisphere
-    hemispheres_volume[..., z_halfway:] = 2 # left hemisphere
+    hemispheres_volume[..., :z_halfway] = 1 # left hemisphere
+    hemispheres_volume[..., z_halfway:] = 2 # right hemisphere
     hemispheres_volume[annotation.raw == 0] = 0 # outside the brain
 
     hemispheres = annotation.with_data(hemispheres_volume)
