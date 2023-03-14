@@ -100,13 +100,13 @@ def assign_hemispheres(annotation, z_halfway: int = 0):
     Returns:
         VoxelData of the same shape of the input annotation, with the following voxels values: 1 for left hemisphere, 2 for right hemisphere, 0 if outside the brain.
     """
-    hemispheres_volume = np.zeros_like(annotation.raw, dtype=np.dtype('u1'))
+    hemispheres_volume = np.zeros_like(annotation.raw, dtype=np.dtype("u1"))
 
     if z_halfway == 0:
         z_halfway = compute_halfway(hemispheres_volume.shape[2])
-    hemispheres_volume[..., :z_halfway] = 1 # left hemisphere
-    hemispheres_volume[..., z_halfway:] = 2 # right hemisphere
-    hemispheres_volume[annotation.raw == 0] = 0 # outside the brain
+    hemispheres_volume[..., :z_halfway] = 1  # left hemisphere
+    hemispheres_volume[..., z_halfway:] = 2  # right hemisphere
+    hemispheres_volume[annotation.raw == 0] = 0  # outside the brain
 
     hemispheres = annotation.with_data(hemispheres_volume)
     return hemispheres
