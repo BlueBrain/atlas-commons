@@ -6,7 +6,7 @@ TEST_PATH = Path(Path(__file__).parent)
 import numpy as np
 import numpy.testing as npt
 import pytest
-from voxcell import RegionMap
+from voxcell import RegionMap, VoxelData
 
 import atlas_commons.utils as tested
 from atlas_commons.exceptions import AtlasCommonsError
@@ -75,6 +75,23 @@ def test_split_into_halves():
             ]
         ),
     )
+
+
+def test_assign_hemispheres():
+    shape = (1, 1, 2)
+    rands = np.random.randint(low=10, high=100, size=shape)
+    zeros = np.zeros_like(rands)
+    volume = np.concatenate((rands, zeros))
+    annotation = VoxelData(volume, shape)
+    hemispheres_volume = tested.assign_hemispheres(annotation).raw
+
+    half_z_shape = (shape[0], shape[1], shape[2] // 2)
+    left = np.full(half_z_shape, 1)
+    right = np.full(half_z_shape, 2)
+    leftright = np.concatenate((left, right), axis=2)
+    test_volume = np.concatenate((leftright, zeros))
+
+    npt.assert_array_equal(hemispheres_volume, test_volume)
 
 
 def get_hierarchy_excerpt():
