@@ -5,6 +5,7 @@ from typing import Dict, Tuple
 
 import numpy as np
 import voxcell
+import re
 
 from atlas_commons.exceptions import AtlasCommonsError
 from atlas_commons.typing import AnnotationT, BoolArray, FloatArray, NumericArray
