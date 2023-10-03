@@ -206,6 +206,23 @@ def create_layered_volume(
 
     assert_metadata_content(metadata)
 
+    if "ignore" in metadata:
+        ignore_ids_ = region_map.find(
+            metadata["ignore"]["name"],
+            attr=metadata["ignore"]["attribute"],
+            with_descendants=metadata["region"].get("with_descendants", False),
+        )
+
+        ignore_names = [
+            region_map.get(child, attr="acronym")
+            for child in ignore_ids_
+            if re.match(metadata["ignore"]["query"], region_map.get(child, attr="acronym"))
+        ]
+        ignore_ids = [region_map.find(child, attr="acronym").pop() for child in ignore_names]
+
+    else:
+        ignore_ids = []
+
     metadata_layers = metadata["layers"]
     layers = np.zeros_like(annotated_volume, dtype=np.uint8)
     region_ids = region_map.find(
@@ -213,14 +230,15 @@ def create_layered_volume(
         attr=metadata["region"]["attribute"],
         with_descendants=metadata["region"].get("with_descendants", False),
     )
-    for (index, query) in enumerate(metadata_layers["queries"], 1):
+    for index, query in enumerate(metadata_layers["queries"], 1):
         layer_ids = region_map.find(
             query,
             attr=metadata_layers["attribute"],
             with_descendants=metadata_layers.get("with_descendants", False),
         )
-        layers[np.isin(annotated_volume, list(layer_ids & region_ids))] = index
-
+        layers[
+            np.isin(annotated_volume, list(set(list(layer_ids & region_ids)) - set(ignore_ids)))
+        ] = index
     return layers
 
 
