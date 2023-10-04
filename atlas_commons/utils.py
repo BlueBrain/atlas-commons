@@ -208,16 +208,17 @@ def create_layered_volume(
     assert_metadata_content(metadata)
 
     if "ignore" in metadata:
+        metadata_ignore = metadata["ignore"]
         ignore_ids_ = region_map.find(
-            metadata["ignore"]["name"],
-            attr=metadata["ignore"]["attribute"],
+            metadata_ignore["name"],
+            attr=metadata_ignore["attribute"],
             with_descendants=metadata["region"].get("with_descendants", False),
         )
 
         ignore_names = [
             region_map.get(child, attr="acronym")
             for child in ignore_ids_
-            if re.match(metadata["ignore"]["query"], region_map.get(child, attr="acronym"))
+            if re.match(metadata_ignore["query"], region_map.get(child, attr="acronym"))
         ]
         ignore_ids = [region_map.find(child, attr="acronym").pop() for child in ignore_names]
 
