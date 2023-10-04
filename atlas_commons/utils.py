@@ -1,11 +1,11 @@
 """Generic atlas tools"""
 from __future__ import annotations
 
+import re
 from typing import Dict, Tuple
 
 import numpy as np
 import voxcell
-import re
 
 from atlas_commons.exceptions import AtlasCommonsError
 from atlas_commons.typing import AnnotationT, BoolArray, FloatArray, NumericArray
@@ -218,7 +218,9 @@ def create_layered_volume(
         ignore_names = [
             region_map.get(child, attr="acronym")
             for child in ignore_ids_
-            if re.match(metadata_ignore["query"], region_map.get(child, attr="acronym"))
+            if re.match(
+                metadata_ignore["query"], region_map.get(child, attr=metadata_ignore["attribute"])
+            )
         ]
         ignore_ids = [region_map.find(child, attr="acronym").pop() for child in ignore_names]
 
