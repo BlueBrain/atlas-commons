@@ -2,7 +2,6 @@
 import inspect
 import logging
 import os
-from collections import OrderedDict
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from functools import wraps
@@ -20,7 +19,7 @@ DATA_PATH = Path(__file__).parent / "data"
 ABT_PATH = Path(__file__).parent.parent.parent
 
 
-class ParameterContainer(OrderedDict):
+class ParameterContainer(dict):
     """A dict class used to contain and display the parameters"""
 
     def __repr__(self):
@@ -30,16 +29,13 @@ class ParameterContainer(OrderedDict):
     __str__ = __repr__
 
 
-def log_args(logger, handler_path=None):
+def log_args(logger):
     """A decorator used to redirect logger and log arguments"""
 
-    def set_logger(function, logger_path=handler_path):
-
-        if handler_path is None:
-            logger_path = os.path.join(LOG_DIRECTORY, function.__name__ + ".log")
-
+    def set_logger(function):
         @wraps(function)
         def wrapper(*args, **kw):
+            logger_path = os.path.join(LOG_DIRECTORY, function.__name__ + ".log")
             logger.addHandler(logging.FileHandler(logger_path))
             param = ParameterContainer(inspect.signature(function).parameters)
             for name, arg in zip(inspect.signature(function).parameters, args):
@@ -191,6 +187,21 @@ def verbose_option(function):
         count=True,
         required=False,
         help="Use -v for info and -vv for debug. Defaults to warning level.",
+    )(function)
+
+    def set_log_file(_, __, log_output_path):
+        global LOG_DIRECTORY  # pylint: disable=global-statement
+        LOG_DIRECTORY = log_output_path
+
+    function = click.option(
+        "--log-output-path",
+        type=click.Path(writable=True, file_okay=False, dir_okay=True, resolve_path=True),
+        default=LOG_DIRECTORY,
+        required=False,
+        help="Set the log directory",
+        callback=set_log_file,
+        is_eager=True,
+        expose_value=False,
     )(function)
 
     return function
