@@ -23,7 +23,7 @@ class ParameterContainer(dict):
     """A dict class used to contain and display the parameters"""
 
     def __repr__(self):
-        """Better printing than the normal OrderedDict"""
+        """Better printing than the normal dict"""
         return ", ".join(str(key) + ":" + str(val) for key, val in self.items())
 
     __str__ = __repr__
