@@ -22,11 +22,9 @@ ABT_PATH = Path(__file__).parent.parent.parent
 class ParameterContainer(dict):
     """A dict class used to contain and display the parameters"""
 
-    def __repr__(self):
+    def __str__(self):
         """Better printing than the normal dict"""
         return ", ".join(str(key) + ":" + str(val) for key, val in self.items())
-
-    __str__ = __repr__
 
 
 def log_args(logger):
